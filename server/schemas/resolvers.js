@@ -1,7 +1,7 @@
 // import the user model
-const { User } = require(`../models`);
+const { User } = require('../models');
 // import sign token function from auth
-const { signToken } = require(`../utils/auth`);
+const { signToken } = require('../utils/auth');
 
 const resolvers = {
     Query: {
@@ -14,7 +14,7 @@ const resolvers = {
     },
     Mutation: {
         // creates user, signs token, and returns both
-        createUser: async (parent, args) => {
+        addUser: async (parent, args) => {
             const user = await User.create(args);
 
             const token = signToken(user);
@@ -50,7 +50,7 @@ const resolvers = {
             return updatedUser;
         },
         // finds user with matching id, then removes the matching bookId from savedBooks, then returns updated user
-        deleteBook: async (parent, {_id, bookId }) => {
+        removeBook: async (parent, {_id, bookId }) => {
             const updatedUser = await User.findOneAndUpdate(
                 { _id },
                 { $pull: { savedBooks: bookId }},
