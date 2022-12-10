@@ -1,14 +1,37 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { ApolloClient, ApolloProvider, InMemoryCache } from '@apollo/client';
+import { ApolloClient, ApolloProvider, InMemoryCache, createHttpLink } from '@apollo/client';
 import SearchBooks from './pages/SearchBooks';
 import SavedBooks from './pages/SavedBooks';
 import Navbar from './components/Navbar';
 
-const client = newApolloClient({
+// middleware that attaches JWT token to every request
+const authLink = setContent((_, { headers }) => {
+
+  // grabs token from local storage
+  const token = localStorage.getItem('id_token');
+
+  // return the headers
+  return {
+    headers: {
+      ...headers,
+      authorization: token ? `Bearer ${token}` : ''
+    }
+  }
+})
+
+// variable for graphql endpoint
+const httpLink = createHttpLink({
   uri: '/graphql',
+});
+
+const client = newApolloClient({
+  
+  // use authLink middleware 
+  link: authLink.concat(httpLink),
   cache: new InMemoryCache(),
 });
+
 
 function App() {
   return (

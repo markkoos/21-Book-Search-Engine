@@ -2,6 +2,8 @@
 const { User } = require('../models');
 // import sign token function from auth
 const { signToken } = require('../utils/auth');
+// import authentication error function
+const { AuthenticationError } = require('apollo-server-express');
 
 const resolvers = {
     Query: {
@@ -14,25 +16,25 @@ const resolvers = {
     },
     Mutation: {
         // creates user, signs token, and returns both
-        addUser: async (parent, args) => {
-            const user = await User.create(args);
+        addUser: async (parent, { username, email, password }) => {
+            const user = await User.create({ username, email, password });
 
             const token = signToken(user);
 
             return { token, user };
         },
         // logs user in, signs token and returns both
-        login: async (parent, args) => {
-            const user = await User.findOne({ $or: [{ username: args.username }, { email: args.email } ]});
+        login: async (parent, { email, password }) => {
+            const user = await User.findOne({ email });
             
-            if (!user) {
-                return res.status(400).json({ message: "Can't find this user" });
-              }
+            if(!user) {
+                throw new AuthenticationError('No user with this email was found');
+            }
             
-            const correctPw = await user.isCorrectPassword(args.password);
+            const correctPw = await user.isCorrectPassword(password);
 
             if (!correctPw) {
-                return res.status(400).json({ message: 'Wrong password!' });
+                throw new AuthenticationError('Wrong password');
             }
 
             const token = signToken(user);
@@ -42,7 +44,7 @@ const resolvers = {
         // finds user with matching id, then saves the bookId to savedBooks, then returns the updated user
         saveBook: async (parent, {_id, bookId }) => {
             const updatedUser = await User.findOneAndUpdate(
-                { _id },
+                { _id: _id },
                 { $addToSet: { savedBooks: bookId }}, 
                 { new: true, runValidators: true },
             );
@@ -52,7 +54,7 @@ const resolvers = {
         // finds user with matching id, then removes the matching bookId from savedBooks, then returns updated user
         removeBook: async (parent, {_id, bookId }) => {
             const updatedUser = await User.findOneAndUpdate(
-                { _id },
+                { _id: _id },
                 { $pull: { savedBooks: bookId }},
                 { new: true }            
             );
