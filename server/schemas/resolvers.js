@@ -11,7 +11,7 @@ const resolvers = {
         me: async (parent, {_id}) => {
           const params = _id ? {_id} : {};
 
-          return User.find(params);   
+          return User.findOne (params);   
         },
     },
     Mutation: {
@@ -42,10 +42,10 @@ const resolvers = {
             return { token, user };
         },
         // finds user with matching id, then saves the bookId to savedBooks, then returns the updated user
-        saveBook: async (parent, {_id, bookId }) => {
+        saveBook: async (parent, {_id, input }) => {
             const updatedUser = await User.findOneAndUpdate(
                 { _id: _id },
-                { $addToSet: { savedBooks: bookId }}, 
+                { $addToSet: { savedBooks: input }}, 
                 { new: true, runValidators: true },
             );
             
@@ -55,7 +55,7 @@ const resolvers = {
         removeBook: async (parent, {_id, bookId }) => {
             const updatedUser = await User.findOneAndUpdate(
                 { _id: _id },
-                { $pull: { savedBooks: bookId }},
+                { $pull: { savedBooks: { bookId: bookId } } },
                 { new: true }            
             );
 

@@ -12,15 +12,21 @@ import { useParams } from 'react-router-dom';
 const SavedBooks = () => {
 
   // grabs the id of the current user
-  const { _id } = useParams();
+  const userObject = Auth.getProfile();
+
+  const _id  = userObject.data._id
+
+  console.log( _id );
 
   // using GET_ME query for the data
-  const { loading, data } = useQuery(GET_ME, {
-    variables: { _id: _id }, 
-  });
+  const { loading, data } = useQuery(GET_ME);
+
+  console.log(data);
+
+  const [removeBook, { error }] = useMutation(REMOVE_BOOK);
 
   // if not user is found within the data return an empty object
-  const userData = data?.user || {};
+  const userData = data?.me || {};
 
   // create function that accepts the book's mongo _id value as param and deletes the book from the database
   const handleDeleteBook = async (bookId) => {
@@ -30,12 +36,12 @@ const SavedBooks = () => {
       return false;
     }
 
-    const [removeBook, { error }] = useMutation(REMOVE_BOOK);
-
     try {
       const { data } = await removeBook({
-        variables: { bookId: bookId },
+        variables: { _id, bookId: bookId },
       })
+
+      console.log(data)
       // upon success, remove book's id from localStorage
       removeBookId(bookId);
     } catch (err) {
@@ -57,20 +63,20 @@ const SavedBooks = () => {
       </Jumbotron>
       <Container>
         <h2>
-          {userData.savedBooks.length
+          {userData?.savedBooks?.length
             ? `Viewing ${userData.savedBooks.length} saved ${userData.savedBooks.length === 1 ? 'book' : 'books'}:`
             : 'You have no saved books!'}
         </h2>
         <CardColumns>
-          {userData.savedBooks.map((book) => {
+          {userData?.savedBooks?.map((book) => {
             return (
-              <Card key={book.bookId} border='dark'>
-                {book.image ? <Card.Img src={book.image} alt={`The cover for ${book.title}`} variant='top' /> : null}
+              <Card key={book?.bookId} border='dark'>
+                {book?.image ? <Card.Img src={book?.image} alt={`The cover for ${book?.title}`} variant='top' /> : null}
                 <Card.Body>
-                  <Card.Title>{book.title}</Card.Title>
-                  <p className='small'>Authors: {book.authors}</p>
-                  <Card.Text>{book.description}</Card.Text>
-                  <Button className='btn-block btn-danger' onClick={() => handleDeleteBook(book.bookId)}>
+                  <Card.Title>{book?.title}</Card.Title>
+                  <p className='small'>Authors: {book?.authors}</p>
+                  <Card.Text>{book?.description}</Card.Text>
+                  <Button className='btn-block btn-danger' onClick={() => handleDeleteBook(book?.bookId)}>
                     Delete this Book!
                   </Button>
                 </Card.Body>
